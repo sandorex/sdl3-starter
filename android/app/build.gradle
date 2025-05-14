@@ -3,19 +3,22 @@ plugins {
 }
 
 android {
-    namespace = "org.libsdl.app"
+    namespace = "io.github.sandorex.sdl3example"
     compileSdkVersion 35
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 35
         versionCode 1
-        versionName "1.0"
+
+        // get full version from cmake
+        versionName "cmake -P ${System.getProperty("user.dir")}/../CMakeLists.txt".execute().err.text.trim()        // versionName "0.1.1-fuck"
+        
         externalNativeBuild {
             cmake {
                 arguments "-DANDROID_PLATFORM=android-21", "-DANDROID_STL=c++_static"
+                // NOTE: uncomment these to build for different architectures
                 // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 abiFilters 'arm64-v8a'
-                version = "3.21+"
             }
         }
     }
@@ -25,9 +28,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    applicationVariants.all { variant ->
-        tasks["merge${variant.name.capitalize()}Assets"]
-            .dependsOn("externalNativeBuild${variant.name.capitalize()}")
+    sourceSets {
+        main {
+            assets.srcDirs = ['../../resources']
+        }
     }
     if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
         sourceSets.main {
@@ -47,3 +51,9 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 }
+
+// test if version name is actually set by command
+assert android.defaultConfig.versionName : "versionName is not set"
+
+// print the full version just in case
+logger.lifecycle("Full Version: ${android.defaultConfig.versionName}")

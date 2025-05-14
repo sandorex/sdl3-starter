@@ -1,3 +1,6 @@
+# create compile_commands.json for debugging and LSP
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "" FORCE)
+
 # use this when creating a release!
 option(PRODUCTION "Compile production executable" OFF)
 

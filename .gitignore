@@ -2,6 +2,7 @@ cmake_deps/
 cmake_deps_android/
 build/
 
+.cache/
 .cxx/
 
 # built application files
