@@ -3,16 +3,18 @@ cmake_minimum_required(VERSION 3.21)
 # set project version here so its useable in cmake script mode
 set(PROJECT_VERSION 0.1.0)
 
+include(cmake/ExtendedVersion.cmake)
+
 # allow file to be called with `cmake -P CMakeLists.txt` to get full version
 if(CMAKE_SCRIPT_MODE_FILE)
-    include(${CMAKE_CURRENT_LIST_DIR}/cmake/ExtendedVersion.cmake)
     set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})
     extend_version(${PROJECT_VERSION} PROJECT_VERSION PROJECT_VERSION_LONG)
     message("${PROJECT_VERSION_LONG}")
     return()
 endif()
 
-# TODO add command for packaging with resources into a zip
+# get full version with git commit
+extend_version(${PROJECT_VERSION} PROJECT_VERSION PROJECT_VERSION_LONG)
 
 project(SDL3Example VERSION "${PROJECT_VERSION}" LANGUAGES CXX)
 
@@ -24,66 +26,72 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 # cache fetchcontent outside build
 set(FETCHCONTENT_BASE_DIR ${CMAKE_SOURCE_DIR}/cmake_deps)
 
-message(STATUS "Building config set to '${CMAKE_BUILD_TYPE}'")
+message(STATUS "Building config set to '${CMAKE_BUILD_TYPE}', production: ${PRODUCTION}")
 
-# TODO try setting source path for each fetchcontent so all stuff can be in the proper binary path
 if(ANDROID)
     message(STATUS "Building for Android")
 
     # prevent conflicts when building for android
     set(FETCHCONTENT_BASE_DIR "${FETCHCONTENT_BASE_DIR}_android")
 
-    add_definitions(-DANDROID)
-elif(EMSCRIPTEN)
-    message(STATUS "Building for Web")
-
-    # prevent conflicts when building for android
-    set(FETCHCONTENT_BASE_DIR "${FETCHCONTENT_BASE_DIR}_web")
-
-    # executables need to be html webpages for web
-    set(CMAKE_EXECUTABLE_SUFFIX ".html" CACHE INTERNAL "")
-
-    # TODO include resources for web
-    
-    add_definitions(-DWEB)
-endif()
-
-include(FetchContent)
-include(cmake/FetchSDL.cmake)
-
-if(ANDROID)
-    # you have to compile it as a library named main on android
+    # for android it has to be built as a shared library named "main"
     set(executable_name main)
     add_library("${executable_name}" SHARED)
+    target_compile_definitions("${executable_name}" PUBLIC ANDROID)
 else()
     set(executable_name "${PROJECT_NAME}")
     add_executable("${executable_name}")
 endif()
 
-target_sources("${executable_name}" PRIVATE src/main.cc)
+if(EMSCRIPTEN)
+    message(STATUS "Building for Web")
 
+    set(FETCHCONTENT_BASE_DIR "${FETCHCONTENT_BASE_DIR}_web")
+
+    # required to build actual webpages
+    set_target_properties("${executable_name}" PROPERTIES SUFFIX ".html")
+    target_compile_definitions("${executable_name}" PUBLIC WEB)
+
+    # take all resources from resources/ directory
+    target_link_libraries("${executable_name}" PRIVATE
+        "--preload-file \"${CMAKE_SOURCE_DIR}/resources\""
+    )
+endif()
+
+target_sources("${executable_name}" PRIVATE src/main.cc)
 target_compile_features(${executable_name} PUBLIC cxx_std_20)
 
-target_compile_definitions("${executable_name}" PUBLIC SDL_MAIN_USE_CALLBACKS=1)
+target_compile_definitions("${executable_name}"
+    PUBLIC
+    VERSION="${PROJECT_VERSION}"
+    VERSION_LONG="${PROJECT_VERSION_LONG}"
+
+    SDL_MAIN_USE_CALLBACKS=1
+)
 
 # setup resource paths
 if(ANDROID)
     # android loads from root so add nothing to the path
     target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="")
+elseif(EMSCRIPTEN)
+    # TODO idk what to set
+    target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="resources/")
 elseif(PRODUCTION)
     # for production load from current directory
     target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="./")
 else()
-    # make resource path relative
+    # make resource path relative for debug builds
     set(resource_path "${CMAKE_CURRENT_SOURCE_DIR}/resources/")
     cmake_path(
         RELATIVE_PATH resource_path
         BASE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
 
-    # for debug excluding android just load directly from the resources directory
     target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="${resource_path}")
 endif()
+
+include(FetchContent)
+include(cmake/FetchDependencies.cmake)
 
 target_link_libraries("${executable_name}"
     PRIVATE
@@ -91,3 +99,21 @@ target_link_libraries("${executable_name}"
     SDL3_ttf::SDL3_ttf-static
     SDL3_image::SDL3_image-static
 )
+
+# package application as a zip
+install(
+    DIRECTORY "${CMAKE_SOURCE_DIR}/resources"
+    DESTINATION .
+)
+install(
+    TARGETS "${executable_name}"
+    RUNTIME DESTINATION .
+)
+
+set(CPACK_GENERATOR "ZIP" CACHE STRING "" FORCE)
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION_LONG}")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+
+include(CPack)
