@@ -1,29 +1,30 @@
-DEBUG_CONFIG := 'Debug'
 RELEASE_CONFIG := 'RelWithDebInfo'
+
+WEB_BUILD_DIR := justfile_directory() + '/build_web'
+LINUX_BUILD_DIR := justfile_directory() + '/build'
+# MINGW_BUILD_DIR := justfile_directory() + '/build_mingw32'
 
 _default:
     @just --list
 
-_web build_dir config +ARGS:
+# build and package with emscripten
+web:
     #!/usr/bin/env bash
-    dir_name='{{ justfile_directory() }}/{{ build_dir }}'
-    [[ -d "$dir_name" ]] || emcmake cmake -B "$dir_name" -DCMAKE_BUILD_TYPE='{{ config }}' {{ ARGS }}
-    cmake --build "$dir_name"
+    set -euo pipefail
 
-# build for web debug
-web-debug *ARGS: (_web 'web_debug' DEBUG_CONFIG ARGS)
+    # configure using emscripten
+    emcmake cmake -B '{{ WEB_BUILD_DIR }}' -DPRODUCTION=1 -DCMAKE_BUILD_TYPE='{{ RELEASE_CONFIG }}'
 
-# build for web release
-web-release *ARGS: (_web 'web_release' RELEASE_CONFIG ARGS)
+    # package the webapp
+    cmake --build '{{ WEB_BUILD_DIR }}' --target package
 
-_linux build_dir config +ARGS:
+# build and package for linux
+linux:
     #!/usr/bin/env bash
-    dir_name='{{ justfile_directory() }}/{{ build_dir }}'
-    [[ -d "$dir_name" ]] || cmake -B "$dir_name" -DCMAKE_BUILD_TYPE='{{ config }}' {{ ARGS }}
-    cmake --build "$dir_name"
+    set -euo pipefail
 
-# build for linux debug
-linux-debug *ARGS: (_linux 'linux_debug' DEBUG_CONFIG ARGS)
+    # configure using emscripten
+    cmake -B '{{ LINUX_BUILD_DIR }}' -DPRODUCTION=1 -DCMAKE_BUILD_TYPE='{{ RELEASE_CONFIG }}'
 
-# build for linux release
-linux-release *ARGS: (_linux 'linux_release' RELEASE_CONFIG ARGS)
+    # package the webapp
+    cmake --build '{{ LINUX_BUILD_DIR }}' --target package
