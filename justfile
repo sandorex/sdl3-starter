@@ -7,6 +7,15 @@ LINUX_BUILD_DIR := justfile_directory() + '/build'
 _default:
     @just --list
 
+# build and package for android
+android:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    cd android
+
+    ./gradlew assembleRelease
+
 # build and package with emscripten
 web:
     #!/usr/bin/env bash

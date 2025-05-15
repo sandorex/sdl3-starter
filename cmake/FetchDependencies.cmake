@@ -8,6 +8,9 @@
 
 include(FetchContent)
 
+# force static linking
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 # where dependencies will
 set(DEPS_DIR "${CMAKE_SOURCE_DIR}/deps")
 

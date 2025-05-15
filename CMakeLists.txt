@@ -18,10 +18,10 @@ extend_version(${PROJECT_VERSION} PROJECT_VERSION PROJECT_VERSION_LONG)
 
 project(SDL3Example VERSION "${PROJECT_VERSION}" LANGUAGES CXX)
 
-include(cmake/Preludes.cmake)
+# path where all assets are
+set(resource_dir "${CMAKE_SOURCE_DIR}/resources")
 
-# force static linking
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+include(cmake/Preludes.cmake)
 
 message(STATUS "Building config set to '${CMAKE_BUILD_TYPE}', production: ${PRODUCTION}")
 
@@ -31,7 +31,7 @@ if(ANDROID)
     # for android it has to be built as a shared library named "main"
     set(executable_name main)
     add_library("${executable_name}" SHARED)
-    target_compile_definitions("${executable_name}" PUBLIC ANDROID)
+    target_compile_definitions("${executable_name}" PRIVATE ANDROID)
 else()
     set(executable_name "${PROJECT_NAME}")
     add_executable("${executable_name}")
@@ -42,46 +42,44 @@ if(EMSCRIPTEN)
 
     # required to build actual webpages
     set_target_properties("${executable_name}" PROPERTIES SUFFIX ".html")
-    target_compile_definitions("${executable_name}" PUBLIC WEB)
+    target_compile_definitions("${executable_name}" PRIVATE WEB)
 
-    # package all resources in /resources and make them available as the root
+    # package all resources and make them available as the root
     target_link_libraries("${executable_name}"
         PRIVATE
-        "--preload-file \"${CMAKE_SOURCE_DIR}/resources@\""
+        "--preload-file \"${resource_dir}@\""
     )
 endif()
 
 target_sources("${executable_name}" PRIVATE src/main.cc)
-target_compile_features(${executable_name} PUBLIC cxx_std_20)
 
 target_compile_definitions("${executable_name}"
-    PUBLIC
+    PRIVATE
     VERSION="${PROJECT_VERSION}"
     VERSION_LONG="${PROJECT_VERSION_LONG}"
 
     SDL_MAIN_USE_CALLBACKS=1
 )
 
-# setup resource paths
-if(ANDROID OR EMSCRIPTEN)
-    # android and web load from root so use empty path
-    target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="")
-elseif(PRODUCTION)
-    # for production load from current directory
-    target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="./resources")
-else()
-    # make resource path relative for debug builds
-    set(resource_path "${CMAKE_CURRENT_SOURCE_DIR}/resources/")
-    cmake_path(
-        RELATIVE_PATH resource_path
-        BASE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    )
+# get relative path to assets for debug builds / tests
+cmake_path(
+    RELATIVE_PATH resource_dir
+    BASE_DIRECTORY "${CMAKE_BINARY_DIR}"
+    OUTPUT_VARIABLE resource_dir_relative
+)
 
-    target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="${resource_path}")
+# setup resource paths
+if(ANDROID OR EMSCRIPTEN OR PRODUCTION)
+    # load from root so use empty path
+    target_compile_definitions("${executable_name}" PRIVATE RESOURCES_PATH="")
+else()
+    # on desktop use relative path so debug builds can access resources without copying
+    target_compile_definitions("${executable_name}" PRIVATE RESOURCES_PATH="${resource_dir_relative}/")
 endif()
 
 include(cmake/FetchDependencies.cmake)
 
+# link app libraries here
 target_link_libraries("${executable_name}"
     PRIVATE
     SDL3::SDL3-static
@@ -89,33 +87,60 @@ target_link_libraries("${executable_name}"
     SDL3_image::SDL3_image-static
 )
 
-# package application as a zip
-if(EMSCRIPTEN)
-    # for emscripten you have to manually copy all the files
-    install(
-        FILES
-        "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.html"
-        "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.wasm"
-        "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.js"
-        DESTINATION .
-    )
-else()
-    # package resources with the applications
-    install(
-        DIRECTORY "${CMAKE_SOURCE_DIR}/resources"
-        DESTINATION .
+# enable tests only if not crosscompiling (web, android, mingw)
+if(NOT CMAKE_CROSSCOMPILING)
+    add_executable(tests src/main_tests.cc)
+
+    # allow access to resources in tests just in case
+    target_compile_definitions(tests
+        PRIVATE
+        RESOURCES_PATH="${resource_dir_relative}"
     )
 
-    install(
-        TARGETS "${executable_name}"
-        RUNTIME DESTINATION .
+    # link additional test libraries here
+    target_link_libraries(tests
+        PRIVATE
+        doctest
     )
+
+    enable_testing()
+    include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
+    doctest_discover_tests(tests)
 endif()
 
-set(CPACK_GENERATOR "ZIP" CACHE STRING "" FORCE)
-set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
-set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
-set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION_LONG}")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+# package application as zip (except android where gradle does everything)
+if(NOT ANDROID)
+    if(EMSCRIPTEN)
+        # for emscripten you have to manually copy all the files
+        install(
+            FILES
+            "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.html"
+            "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.wasm"
+            "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.js"
+            "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.data"
+            DESTINATION .
+        )
+    else()
+        # package resources with the applications
+        install(
+            # NOTE: the slash is important as we want only the files installed
+            # not the directory itself!
+            DIRECTORY "${resource_dir}/"
+            DESTINATION .
+        )
 
-include(CPack)
+        # copy the executable
+        install(
+            TARGETS "${executable_name}"
+            RUNTIME DESTINATION .
+        )
+    endif()
+
+    set(CPACK_GENERATOR "ZIP" CACHE STRING "" FORCE)
+    set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+    set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION_LONG}")
+    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+
+    include(CPack)
+endif()
