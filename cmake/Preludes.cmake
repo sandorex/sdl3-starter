@@ -1,12 +1,13 @@
 # create compile_commands.json for debugging and LSP
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "" FORCE)
 
+set(FETCHCONTENT_QUIET FALSE)
+
 # use this when creating a release!
 option(PRODUCTION "Compile production executable" OFF)
 
 # set a default build type if none was specified
 set(default_build_type "RelWithDebInfo")
-
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
     set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Choose the type of build." FORCE)

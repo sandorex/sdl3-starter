@@ -23,16 +23,10 @@ include(cmake/Preludes.cmake)
 # force static linking
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-# cache fetchcontent outside build
-set(FETCHCONTENT_BASE_DIR ${CMAKE_SOURCE_DIR}/cmake_deps)
-
 message(STATUS "Building config set to '${CMAKE_BUILD_TYPE}', production: ${PRODUCTION}")
 
 if(ANDROID)
     message(STATUS "Building for Android")
-
-    # prevent conflicts when building for android
-    set(FETCHCONTENT_BASE_DIR "${FETCHCONTENT_BASE_DIR}_android")
 
     # for android it has to be built as a shared library named "main"
     set(executable_name main)
@@ -45,8 +39,6 @@ endif()
 
 if(EMSCRIPTEN)
     message(STATUS "Building for Web")
-
-    set(FETCHCONTENT_BASE_DIR "${FETCHCONTENT_BASE_DIR}_web")
 
     # required to build actual webpages
     set_target_properties("${executable_name}" PROPERTIES SUFFIX ".html")
