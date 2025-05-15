@@ -1,8 +1,15 @@
-cmake_deps/
-cmake_deps_android/
+# cmake downloaded dependencies
+/deps/
+
 build/
 
+# build directories
+/*_release/
+/*_debug/
+
 .cache/
+
+# clangd
 .cxx/
 
 # built application files
