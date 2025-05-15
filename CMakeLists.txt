@@ -44,9 +44,10 @@ if(EMSCRIPTEN)
     set_target_properties("${executable_name}" PROPERTIES SUFFIX ".html")
     target_compile_definitions("${executable_name}" PUBLIC WEB)
 
-    # take all resources from resources/ directory
-    target_link_libraries("${executable_name}" PRIVATE
-        "--preload-file \"${CMAKE_SOURCE_DIR}/resources\""
+    # package all resources in /resources and make them available as the root
+    target_link_libraries("${executable_name}"
+        PRIVATE
+        "--preload-file \"${CMAKE_SOURCE_DIR}/resources@\""
     )
 endif()
 
@@ -62,15 +63,12 @@ target_compile_definitions("${executable_name}"
 )
 
 # setup resource paths
-if(ANDROID)
-    # android loads from root so add nothing to the path
+if(ANDROID OR EMSCRIPTEN)
+    # android and web load from root so use empty path
     target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="")
-elseif(EMSCRIPTEN)
-    # TODO idk what to set
-    target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="resources/")
 elseif(PRODUCTION)
     # for production load from current directory
-    target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="./")
+    target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="./resources")
 else()
     # make resource path relative for debug builds
     set(resource_path "${CMAKE_CURRENT_SOURCE_DIR}/resources/")
@@ -92,14 +90,27 @@ target_link_libraries("${executable_name}"
 )
 
 # package application as a zip
-install(
-    DIRECTORY "${CMAKE_SOURCE_DIR}/resources"
-    DESTINATION .
-)
-install(
-    TARGETS "${executable_name}"
-    RUNTIME DESTINATION .
-)
+if(EMSCRIPTEN)
+    # for emscripten you have to manually copy all the files
+    install(
+        FILES
+        "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.html"
+        "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.wasm"
+        "$<TARGET_FILE_DIR:${executable_name}>/${executable_name}.js"
+        DESTINATION .
+    )
+else()
+    # package resources with the applications
+    install(
+        DIRECTORY "${CMAKE_SOURCE_DIR}/resources"
+        DESTINATION .
+    )
+
+    install(
+        TARGETS "${executable_name}"
+        RUNTIME DESTINATION .
+    )
+endif()
 
 set(CPACK_GENERATOR "ZIP" CACHE STRING "" FORCE)
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
