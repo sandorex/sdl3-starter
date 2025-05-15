@@ -90,7 +90,6 @@ else()
     target_compile_definitions("${executable_name}" PUBLIC RESOURCES_PATH="${resource_path}")
 endif()
 
-include(FetchContent)
 include(cmake/FetchDependencies.cmake)
 
 target_link_libraries("${executable_name}"
