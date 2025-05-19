@@ -1,0 +1,29 @@
+#define VERSION_MAJOR "${PROJECT_VERSION_MAJOR}"
+#define VERSION_MINOR "${PROJECT_VERSION_MINOR}"
+#define VERSION_PATCH "${PROJECT_VERSION_PATCH}"
+#define VERSION_STRING "${PROJECT_VERSION}"
+#define VERSION_LONG_STRING "${PROJECT_VERSION_LONG}"
+
+#cmakedefine PRODUCTION_BUILD
+
+#cmakedefine ANDROID
+#cmakedefine EMSCRIPTEN
+#cmakedefine WINDOWS
+#cmakedefine UNIX
+#cmakedefine BSD
+
+#if !defined(BSD) && defined(UNIX)
+	#define LINUX
+#endif
+
+#if defined(WINDOWS) || defined(UNIX)
+	#define DESKTOP
+#endif
+
+#if !defined(PRODUCTION_BUILD) && defined(DESKTOP)
+	// debug builds on desktop use path
+	#define RESOURCE_PATH "${resource_path}/"
+#else
+	// just use empty path to signify current dir / root
+	#define RESOURCE_PATH ""
+#endif

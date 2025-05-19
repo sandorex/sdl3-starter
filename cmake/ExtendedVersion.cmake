@@ -1,7 +1,12 @@
-# Slighly modified file taken from Calamares project available via url below:
+# Modified file taken from Calamares project available via url below:
+# Code taken from Calamares Project (permalink below) and modified
 # https://github.com/calamares/calamares-extensions/blob/81b4f01fe86129ecc94d0f2e0b89d214094a7af2/CMakeModules/ExtendedVersion.cmake
+# 
+#   SPDX-FileCopyrightText: 2014 Teo Mrnjavac <teo@kde.org>
+#   SPDX-FileCopyrightText: 2021 Adriaan de Groot <groot@kde.org>
+#   SPDX-FileCopyrightText: 2025 Aleksandar Radivojevic <rzhw3h@gmail.com>
+#   SPDX-License-Identifier: BSD-2-Clause
 #
-# Licensed under: BSD-2-Clause
 ###
 #
 # This file defines one function for extending a VERSION-like value
@@ -80,7 +85,7 @@ endfunction()
 function( report_version version top_dir )
     set( CMAKE_SOURCE_DIR ${top_dir} )
     extend_version( ${version} _vshort _vlong )
-    if ( "x${VERSION_STYLE}" STREQUAL "xshort" )
+    if( "x${VERSION_STYLE}" STREQUAL "xshort" )
         message( "${_vshort}" )
     else()
         message( "${_vlong}" )

@@ -11,7 +11,7 @@ include(FetchContent)
 # force static linking
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-# where dependencies will
+# where dependencies will be kept for all builds
 set(DEPS_DIR "${CMAKE_SOURCE_DIR}/deps")
 
 # NOTE: when changing SDL version make sure to update JNI files in android/
@@ -84,9 +84,38 @@ FetchContent_Declare(
 # disable installation of doctest files
 set(DOCTEST_NO_INSTALL TRUE CACHE BOOL "" FORCE)
 
+FetchContent_Declare(
+    clay
+    GIT_REPOSITORY https://github.com/nicbarker/clay.git
+    GIT_TAG v0.13
+    GIT_SHALLOW TRUE
+    SOURCE_DIR "${DEPS_DIR}/clay"
+    SUBBUILD_DIR "${DEPS_DIR}/clay-subbuild"
+    # non-existant directory cause there is no need to build clay as its a
+    # header-only library
+    SOURCE_SUBDIR null
+)
+
+# FetchContent_Declare(
+#     chibi_scheme
+#     GIT_REPOSITORY https://github.com/ashinn/chibi-scheme.git
+#     GIT_TAG 0.11
+#     GIT_SHALLOW TRUE
+#     SOURCE_DIR "${DEPS_DIR}/chibi_scheme"
+#     SUBBUILD_DIR "${DEPS_DIR}/chibi_scheme-subbuild"
+# )
+
 FetchContent_MakeAvailable(
     SDL3
     SDL3_ttf
     SDL3_image
     doctest
+    clay
+    # chibi_scheme
 )
+
+# https://github.com/ashinn/chibi-scheme.git 0.11
+# https://github.com/nicbarker/clay.git v0.13
+
+
+# TODO add lua library

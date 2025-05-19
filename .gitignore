@@ -1,6 +1,9 @@
 # cmake downloaded dependencies
 /deps/
 
+# ignore emscripten
+/emsdk/
+
 build/
 
 # build directories
