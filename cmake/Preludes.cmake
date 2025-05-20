@@ -1,6 +1,10 @@
 # create compile_commands.json for debugging and LSP
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "" FORCE)
 
+# output all executables and libraries in /bin
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 # automatically add CMAKE_SOURCE_DIR and CMAKE_BINARY_DIR to include directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON CACHE BOOL "" FORCE)
 
@@ -42,10 +46,30 @@ endif()
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
 
+# # option to fix dynamic linker path when building with nix
+# # NOTE: this may break things
+# if(CMAKE_FORCE_LD AND UNIX)
+#     add_link_options("LINK:--dynamic-linker ${CMAKE_FORCE_LD}")
+# endif()
+
+macro(target_fix_ld target)
+    if(UNIX AND CMAKE_FORCE_LD)
+        # create a step where the dynamic linker is set to requested value
+        add_custom_command(
+            TARGET "${target}" POST_BUILD
+            COMMAND patchelf --set-interpreter ${CMAKE_FORCE_LD} $<TARGET_FILE:${target}>
+            # WORKING_DIRECTORY "$<TARGET_FILE_DIR:${target}>"
+            COMMENT "Fixing dynamic linker for '${target}'"
+        )
+    endif()
+endmacro()
+
+# options summary
 message(STATUS
-    "Building configuration:\n"
+    "Build configuration:\n"
     "  CMAKE_BUILD_TYPE: '${CMAKE_BUILD_TYPE}'\n"
     "  PRODUCTION: ${PRODUCTION}\n"
     "  SCCACHE / CCACHE: ${ccache_used}\n"
-    "  PLATFORM: ${CMAKE_SYSTEM_NAME}"
+    "  PLATFORM: ${CMAKE_SYSTEM_NAME}\n"
+    "  CMAKE_FORCE_LD: ${CMAKE_FORCE_LD}"
 )

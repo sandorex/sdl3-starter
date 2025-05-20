@@ -9,7 +9,10 @@
 
       pkgs = import nixpkgs { system = "x86_64-linux"; };
     in
-    {
+    rec {
+      # default to linux
+      devShells.x86_64-linux.default = devShells.x86_64-linux.linux;
+
       devShells.x86_64-linux.linux = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
           ninja

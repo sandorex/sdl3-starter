@@ -41,7 +41,7 @@ elseif(MSVC)
     # warning level 4 and all warnings as errors
     target_compile_options(project_warnings
         INTERFACE
-        # more warning
+        # more warnings
         /W4
 
         # treat warnings as errors
@@ -54,54 +54,27 @@ add_library(project_options INTERFACE)
 # require C++20
 target_compile_features(project_options INTERFACE cxx_std_20)
 
-add_library(project_defines INTERFACE)
-
 if(EMSCRIPTEN)
     # required to actually make a webpage instead you get javascript and wasm only
     set_target_properties(project_options PROPERTIES SUFFIX ".html")
 endif()
 
-# if(ANDROID)
-#     message(STATUS "Building for Android")
-#     target_compile_definitions(project_defines INTERFACE ANDROID)
-# elseif(EMSCRIPTEN)
-#     message(STATUS "Building for Web")
-#     target_compile_definitions(project_defines INTERFACE WEB)
-
-#     # required to actually make a webpage instead you get wasm
-#     set_target_properties(project_defines PROPERTIES SUFFIX ".html")
-# else()
-#     message(STATUS "Building for Desktop")
-#     target_compile_definitions(project_defines INTERFACE DESKTOP)
-# endif()
-
-# target_compile_definitions(project_defines
-#     INTERFACE
-#     VERSION="${PROJECT_VERSION}"
-#     VERSION_LONG="${PROJECT_VERSION_LONG}"
-# )
-
-# # setup resource paths
-# if(ANDROID OR EMSCRIPTEN OR PRODUCTION)
-#     # load from root so use empty path
-#     set(resources_path "")
-#     # target_compile_definitions(project_defines INTERFACE RESOURCES_PATH="")
-# else()
 # get relative path to assets for debug builds / tests
 cmake_path(
     RELATIVE_PATH resource_dir
-    BASE_DIRECTORY "${CMAKE_BINARY_DIR}"
+    BASE_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
     OUTPUT_VARIABLE resource_path
 )
 
-#     # set(resource_path)
-#     # on desktop use relative path so debug builds can access resources without copying
-#     target_compile_definitions(project_defines INTERFACE RESOURCES_PATH="${resource_dir_relative}/")
-# endif()
+# using configure_file instead of target_compile_definitions as it does not
+# trigger recompilation when value does not change
 configure_file(src/options.h.in options.h)
-
+include_directories(${CMAKE_BINARY_DIR})
 
 include(cmake/FetchDependencies.cmake)
+
+# build the actual app
+add_subdirectory(src)
 
 # enable tests only if not crosscompiling (web, android, mingw)
 if(NOT CMAKE_CROSSCOMPILING)

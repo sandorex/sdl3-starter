@@ -22,8 +22,8 @@
 
 #if !defined(PRODUCTION_BUILD) && defined(DESKTOP)
 	// debug builds on desktop use path
-	#define RESOURCE_PATH "${resource_path}/"
+	#define RESOURCES_PATH "${resource_path}/"
 #else
 	// just use empty path to signify current dir / root
-	#define RESOURCE_PATH ""
+	#define RESOURCES_PATH ""
 #endif
