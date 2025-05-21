@@ -22,7 +22,8 @@ jobs:
     - name: Compile
       run: |
         nix develop --command cmake -Bbuild -DCMAKE_BUILD_TYPE=Debug
+        nix develop --command cmake --build build --parallel 4
 
     - name: Test
       run: |
-        nix develop --command cmake --build build --parallel 4 --target test
+        nix develop --command ctest --test-dir build
