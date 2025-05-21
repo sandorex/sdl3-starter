@@ -20,7 +20,7 @@ jobs:
 
     - name: Compile
       run: |
-        nix develop --command cmake -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_FORCE_LD=/lib64/ld-linux-x86-64.so.2
+        nix develop --command cmake -Bbuild -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPRODUCTION=ON -DCMAKE_FORCE_LD=/lib64/ld-linux-x86-64.so.2
         nix develop --command cmake --build build --parallel 4
 
     # test the application but have to manually run the tests as its dynamic
