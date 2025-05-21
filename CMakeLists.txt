@@ -24,7 +24,6 @@ include(cmake/Preludes.cmake)
 # interface libraries to share project options, warnings, defines
 add_library(project_warnings INTERFACE)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # make 
     target_compile_options(project_warnings
         INTERFACE
         # treat undefined macros as errors
@@ -38,7 +37,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         -Werror
     )
 elseif(MSVC)
-    # warning level 4 and all warnings as errors
     target_compile_options(project_warnings
         INTERFACE
         # more warnings

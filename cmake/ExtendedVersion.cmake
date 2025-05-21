@@ -1,7 +1,7 @@
 # Modified file taken from Calamares project available via url below:
 # Code taken from Calamares Project (permalink below) and modified
 # https://github.com/calamares/calamares-extensions/blob/81b4f01fe86129ecc94d0f2e0b89d214094a7af2/CMakeModules/ExtendedVersion.cmake
-# 
+#
 #   SPDX-FileCopyrightText: 2014 Teo Mrnjavac <teo@kde.org>
 #   SPDX-FileCopyrightText: 2021 Adriaan de Groot <groot@kde.org>
 #   SPDX-FileCopyrightText: 2025 Aleksandar Radivojevic <rzhw3h@gmail.com>
