@@ -53,7 +53,7 @@ add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_20)
 
 if(EMSCRIPTEN)
-    # required to actually make a webpage instead you get javascript and wasm only
+    # required to force emscripten to create html
     set_target_properties(project_options PROPERTIES SUFFIX ".html")
 endif()
 
@@ -76,10 +76,11 @@ add_subdirectory(src)
 
 # enable tests only if not crosscompiling (web, android, mingw)
 if(NOT CMAKE_CROSSCOMPILING)
+    # NOTE: enable_testing has to be ran in the top-level file for tests to
+    # be found automatically
+    #
     # tests cannot be ran if dynamic linker is different
-    if(NOT (UNIX AND CMAKE_FORCE_LD))
-        enable_testing()
-    endif()
+    enable_testing()
 
     add_subdirectory(tests)
 endif()

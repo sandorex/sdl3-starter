@@ -24,6 +24,7 @@
           zenity
           libffi
           python313
+          patchelf
         ];
 
         # runtime dependencies

@@ -10,8 +10,8 @@ target_link_libraries(tests
     doctest
 )
 
-# do not try to discover tests if dynamic linker is set as it probably
-# wont be able to run it
+# do not try to discover tests if dynamic linker is set as it probably wont be
+# able to run it and will cause an error
 if(NOT (UNIX AND CMAKE_FORCE_LD))
     include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
     doctest_discover_tests(tests)

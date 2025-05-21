@@ -7,7 +7,7 @@ else()
     add_executable("${executable_name}")
 
     if(EMSCRIPTEN)
-        # package all resources and make them available as the root
+        # package all resources and make them available at the root
         target_link_libraries("${executable_name}"
             PRIVATE
             "--preload-file \"${resource_dir}@\""
