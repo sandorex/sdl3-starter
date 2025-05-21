@@ -76,6 +76,11 @@ add_subdirectory(src)
 
 # enable tests only if not crosscompiling (web, android, mingw)
 if(NOT CMAKE_CROSSCOMPILING)
+    # tests cannot be ran if dynamic linker is different
+    if(NOT (UNIX AND CMAKE_FORCE_LD))
+        enable_testing()
+    endif()
+
     add_subdirectory(tests)
 endif()
 
